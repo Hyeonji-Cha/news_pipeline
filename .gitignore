@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+*.pyo
+*.pyd
+*.pkl
+*.so
+*.log
+
+# Virtualenv
+venv/
+ENV/
+.venv/
+
+# Airflow
+logs/
+airflow-webserver.pid
+unittests.cfg
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Data
+*.db
+*.sqlite
+*.csv
+*.tsv
+*.parquet
+*.json
+*.tmp
+*.bak
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode / IDE
+.vscode/
+.idea/
