@@ -17,12 +17,12 @@ except Exception:
 
 # ---- 이사 대비: 환경 변수(없으면 기존 값 사용) ----
 DATA_DIR = os.getenv("DATA_DIR", "/tmp")
-NEWS_API_KEY = os.getenv("NEWS_API_KEY", "8087861444c14de295d1e33ff974c5f6")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_NAME = os.getenv("DB_NAME", "postgres")
 DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "9223")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_PORT = int(os.getenv("DB_PORT", "5432"))
 
 # 📢 Slack 실패 알람 콜백
@@ -194,7 +194,7 @@ with DAG(
     "news_pipeline",
     default_args=default_args,
     description="뉴스 수집 → 전처리 → CSV → DB → 일별 집계 (Slack 알림 포함)",
-    schedule_interval="*/30 * * * *",  # 10분마다
+    schedule_interval= "*/10 * * * *",  # 스케줄 
     start_date=datetime(2025, 9, 18),
     catchup=False,
     on_success_callback=dag_success_alert,
