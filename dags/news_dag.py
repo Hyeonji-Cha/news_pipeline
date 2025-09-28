@@ -7,6 +7,51 @@ import psycopg2
 import pandas as pd
 import re
 import os
+import sys,os
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "utils"))
+
+from nlp_utils import preprocess_text
+
+def tokenize_news(**kwargs):
+    conn = psycopg2.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        dbname=os.getenv("DB_NAME", "postgres"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("DB_PASSWORD", ""),
+        port=int(os.getenv("DB_PORT", "5432")),
+    )
+    cur = conn.cursor()
+
+    # 전처리 결과 저장용 테이블
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS news_preprocessed (
+            news_id      INTEGER PRIMARY KEY,
+            title_clean  TEXT,
+            content_clean TEXT,
+            updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+    """)
+
+    # 원본 뉴스 가져오기
+    cur.execute("SELECT id, title, content FROM news;")
+    rows = cur.fetchall()
+
+    # 전처리 & UPSERT
+    for news_id, title, content in rows:
+        title_clean   = " ".join(preprocess_text(title or ""))
+        content_clean = " ".join(preprocess_text(content or ""))
+        cur.execute("""
+            INSERT INTO news_preprocessed (news_id, title_clean, content_clean, updated_at)
+            VALUES (%s, %s, %s, now())
+            ON CONFLICT (news_id) DO UPDATE
+            SET title_clean = EXCLUDED.title_clean,
+                content_clean = EXCLUDED.content_clean,
+                updated_at = now();
+        """, (news_id, title_clean, content_clean))
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
 # 이사 대비: .env 지원 (없어도 동작하도록 기본값 유지)
 try:
@@ -224,4 +269,11 @@ with DAG(
         provide_context=True,
     )
 
-    t1 >> t2 >> t3 >> t4
+    t5 = PythonOperator(
+    task_id="tokenize_news",
+    python_callable=tokenize_news,
+    provide_context=True,
+    )
+
+
+    t1 >> t2 >> t3 >> t4 >> t5
